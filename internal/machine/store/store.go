@@ -52,6 +52,25 @@ func (s *Store) Put(ctx context.Context, key string, value any) error {
 	return err
 }
 
+func (s *Store) List(ctx context.Context, key string) ([]string, error) {
+	pattern := key + "%"
+	value := []string{}
+	rows, err := s.corro.QueryContext(ctx, "SELECT key FROM cluster WHERE key LIKE ?", pattern)
+	if err != nil {
+		return nil, err
+	}
+	if !rows.Next() {
+		if rows.Err() != nil {
+			return nil, rows.Err()
+		}
+		return nil, ErrKeyNotFound
+	}
+	if err = rows.Scan(&value); err != nil {
+		return nil, err
+	}
+	return value, nil
+}
+
 func (s *Store) Delete(ctx context.Context, key string) error {
 	_, err := s.corro.ExecContext(ctx, "DELETE FROM cluster WHERE key = ?", key)
 	return err
