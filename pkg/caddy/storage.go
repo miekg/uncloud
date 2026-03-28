@@ -1,4 +1,4 @@
-package uncaddy
+package caddy
 
 import (
 	"net/netip"
@@ -18,7 +18,7 @@ type Corrosion struct {
 	s        *store.Store
 }
 
-// module. The returned ModuleInfo must have both a name and a constructor function. This method must not have
+// CaddyModule register the module in caddy. The returned ModuleInfo must have both a name and a constructor function. This method must not have
 // any side-effects.
 func (Corrosion) CaddyModule() caddy.ModuleInfo {
 	return caddy.ModuleInfo{

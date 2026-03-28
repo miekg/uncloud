@@ -1,4 +1,4 @@
-package uncaddy
+package caddy
 
 import (
 	"context"
