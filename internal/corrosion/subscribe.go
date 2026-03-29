@@ -235,7 +235,7 @@ func (c *APIClient) SubscribeContext(
 		return nil, fmt.Errorf("marshal query: %w", err)
 	}
 
-	subURL := c.baseURL.JoinPath("/v1/subscriptions")
+	subURL := c.BaseURL.JoinPath("/v1/subscriptions")
 	if skipRows {
 		q := subURL.Query()
 		q.Set("skip_rows", "true")
@@ -294,7 +294,7 @@ func (c *APIClient) resubscribeWithBackoffFn(id string) func(context.Context, ui
 }
 
 func (c *APIClient) ResubscribeContext(ctx context.Context, id string, fromChange uint64) (*Subscription, error) {
-	subURL := c.baseURL.JoinPath("/v1/subscriptions", id)
+	subURL := c.BaseURL.JoinPath("/v1/subscriptions", id)
 	q := subURL.Query()
 	q.Set("from", strconv.FormatUint(fromChange, 10))
 	subURL.RawQuery = q.Encode()

@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"net/url"
 
 	"github.com/psviderski/uncloud/internal/corrosion"
 	"github.com/psviderski/uncloud/internal/machine/api/pb"
@@ -29,6 +30,9 @@ type Store struct {
 func New(corro *corrosion.APIClient) *Store {
 	return &Store{corro: corro}
 }
+
+// BaseURL returns the URL where the store is listening.
+func (s *Store) BaseURL() *url.URL { return s.corro.BaseURL }
 
 func (s *Store) Get(ctx context.Context, key string, value any) error {
 	rows, err := s.corro.QueryContext(ctx, "SELECT value FROM cluster WHERE key = ?", key)

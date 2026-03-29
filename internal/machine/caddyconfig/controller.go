@@ -41,7 +41,7 @@ func NewController(machineID, configDir, adminSock string, store *store.Store) (
 
 	log := slog.With("component", "caddy-controller")
 	client := NewCaddyAdminClient(adminSock)
-	generator := NewCaddyfileGenerator(machineID, client, log)
+	generator := NewCaddyfileGenerator(machineID, client, log, store)
 
 	return &Controller{
 		machineID:     machineID,

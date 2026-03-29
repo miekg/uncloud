@@ -23,6 +23,12 @@ const (
 # Automatically updated on service or health status changes.
 # Docs: https://uncloud.run/docs/concepts/ingress/overview
 `
+
+	caddyfileStorageFmt = `{
+	storage uncloud %s
+}
+`
+
 	caddyfileTemplate = `# Health check endpoint to verify Caddy reachability on this machine.
 http:// {
 	handle {{.VerifyPath}} {
@@ -70,6 +76,7 @@ type CaddyfileGenerator struct {
 	machineID string
 	validator CaddyfileValidator
 	log       *slog.Logger
+	store     *store.Store
 }
 
 // CaddyfileValidator is an interface for validating Caddyfile configurations.
@@ -77,7 +84,7 @@ type CaddyfileValidator interface {
 	Validate(ctx context.Context, caddyfile string) error
 }
 
-func NewCaddyfileGenerator(machineID string, validator CaddyfileValidator, log *slog.Logger) *CaddyfileGenerator {
+func NewCaddyfileGenerator(machineID string, validator CaddyfileValidator, log *slog.Logger, store *store.Store) *CaddyfileGenerator {
 	if log == nil {
 		log = slog.Default()
 	}
@@ -85,6 +92,7 @@ func NewCaddyfileGenerator(machineID string, validator CaddyfileValidator, log *
 		machineID: machineID,
 		validator: validator,
 		log:       log,
+		store:     store,
 	}
 }
 
@@ -97,7 +105,7 @@ func NewCaddyfileGenerator(machineID string, validator CaddyfileValidator, log *
 //
 // The final Caddyfile structure includes:
 //
-//	[caddy x-caddy (global config)]
+//	[caddy x-caddy storage (global config)]
 //	[generated Caddyfile from all service ports]
 //	[service-a x-caddy]
 //	...
@@ -127,6 +135,11 @@ func (g *CaddyfileGenerator) Generate(
 	caddyfileHeader := fmt.Sprintf(caddyfileHeaderFmt, time.Now().UTC().Format(time.RFC3339))
 	if !includeCustom {
 		return fmt.Sprintf("%s\n%s\n%s", caddyfileHeader, caddyfile, caddyfileUnavailabeFooter), nil
+	}
+
+	caddyfileStorage := ""
+	if g.store != nil {
+		caddyfileStorage = fmt.Sprintf(caddyfileStorageFmt, g.store.BaseURL().Host) + "\n"
 	}
 
 	upstreams := serviceUpstreams(containers)
@@ -235,7 +248,7 @@ func (g *CaddyfileGenerator) Generate(
 		caddyfile += "\n" + errorsComment.String()
 	}
 
-	return caddyfileHeader + "\n" + caddyfile, nil
+	return caddyfileHeader + "\n" + caddyfileStorage + caddyfile, nil
 }
 
 func (g *CaddyfileGenerator) generateBaseFromPorts(containers []api.ServiceContainer) (string, error) {

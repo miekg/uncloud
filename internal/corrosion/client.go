@@ -28,7 +28,7 @@ const (
 
 // APIClient is a client for the Corrosion API.
 type APIClient struct {
-	baseURL         *url.URL
+	BaseURL         *url.URL
 	client          *http.Client
 	newResubBackoff func() backoff.BackOff
 }
@@ -45,7 +45,7 @@ func NewAPIClient(addr netip.AddrPort, opts ...APIClientOption) (*APIClient, err
 		return nil, fmt.Errorf("invalid URL: %w", err)
 	}
 	c := &APIClient{
-		baseURL: baseURL,
+		BaseURL: baseURL,
 		client: &http.Client{
 			Transport: &RetryRoundTripper{
 				Base: &http2.Transport{

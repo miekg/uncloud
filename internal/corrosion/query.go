@@ -56,7 +56,7 @@ func (c *APIClient) ExecMultiContext(ctx context.Context, statements ...Statemen
 		return nil, fmt.Errorf("marshal queries: %w", err)
 	}
 
-	transactionsURL := c.baseURL.JoinPath("/v1/transactions").String()
+	transactionsURL := c.BaseURL.JoinPath("/v1/transactions").String()
 	req, err := http.NewRequestWithContext(ctx, "POST", transactionsURL, bytes.NewReader(body))
 	if err != nil {
 		return nil, fmt.Errorf("create request: %w", err)
@@ -158,7 +158,7 @@ func (c *APIClient) QueryContext(ctx context.Context, query string, args ...any)
 		return nil, fmt.Errorf("marshal query: %w", err)
 	}
 
-	queriesURL := c.baseURL.JoinPath("/v1/queries").String()
+	queriesURL := c.BaseURL.JoinPath("/v1/queries").String()
 	req, err := http.NewRequestWithContext(ctx, "POST", queriesURL, bytes.NewReader(body))
 	if err != nil {
 		return nil, fmt.Errorf("create request: %w", err)

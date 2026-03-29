@@ -1,3 +1,11 @@
+// Package caddy implement a caddy "uncloud" storage module, that allows it to store certificates in corrosion.
+// This is used to build a custom uncloud caddy together with the L4 app. This code in this package is a thing
+// wrapper over internal/machine/store and is used from uncloud/caddy which has the other (Go) files to make
+// it an offical - ready to use - caddy module.
+//
+// The global caddy section just needs to reference the corrosion endpoint for this to work.
+//
+//	storage uncloud <api-endpoint>
 package caddy
 
 import (
@@ -33,7 +41,7 @@ func (c *Corrosion) CertMagicStorage() (certmagic.Storage, error) { return c, ni
 
 // UnmarshalCaddyfile sets up the storage module from Caddyfile tokens. Syntax:
 //
-//	uncloud <addr>
+//	storage uncloud <api-endpoint>
 func (c *Corrosion) UnmarshalCaddyfile(d *caddyfile.Dispenser) (err error) {
 	for d.Next() {
 		if !d.NextArg() {
