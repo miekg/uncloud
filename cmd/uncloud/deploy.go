@@ -13,6 +13,7 @@ import (
 	"github.com/psviderski/uncloud/internal/cli"
 	"github.com/psviderski/uncloud/internal/cli/logs"
 	"github.com/psviderski/uncloud/internal/cli/tui"
+	"github.com/psviderski/uncloud/internal/completion"
 	"github.com/psviderski/uncloud/pkg/api"
 	"github.com/psviderski/uncloud/pkg/client"
 	"github.com/psviderski/uncloud/pkg/client/compose"
@@ -48,6 +49,9 @@ func NewDeployCommand() *cobra.Command {
 			return runDeploy(cmd.Context(), uncli, opts)
 		},
 		GroupID: "service",
+		ValidArgsFunction: func(cmd *cobra.Command, args []string, toComplete string) ([]cobra.Completion, cobra.ShellCompDirective) {
+			return completion.ComposeServices(cmd.Context(), args, toComplete, opts.files, opts.profiles)
+		},
 	}
 
 	cmd.Flags().StringArrayVar(&opts.BuildServicesOptions.BuildArgs, "build-arg", nil,
