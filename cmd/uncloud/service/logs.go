@@ -10,6 +10,7 @@ import (
 	"github.com/psviderski/uncloud/internal/cli"
 	"github.com/psviderski/uncloud/internal/cli/logs"
 	"github.com/psviderski/uncloud/internal/cli/tui"
+	"github.com/psviderski/uncloud/internal/completion"
 	"github.com/psviderski/uncloud/pkg/api"
 	"github.com/psviderski/uncloud/pkg/client"
 	"github.com/psviderski/uncloud/pkg/client/compose"
@@ -61,6 +62,10 @@ If no services are specified, streams logs from all services defined in the Comp
 			return runLogs(cmd.Context(), uncli, args, options)
 		},
 		GroupID: groupID,
+		ValidArgsFunction: func(cmd *cobra.Command, args []string, toComplete string) ([]cobra.Completion, cobra.ShellCompDirective) {
+			uncli := cmd.Context().Value("cli").(*cli.CLI)
+			return completion.Services(cmd.Context(), uncli, args, toComplete)
+		},
 	}
 
 	cmd.Flags().StringSliceVar(&options.Files, "file", nil,
