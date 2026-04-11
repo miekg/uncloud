@@ -72,6 +72,8 @@ If no services are specified, streams logs from all services defined in the Comp
 		"One or more Compose files to load service names from when no services are specified. (default compose.yaml)")
 
 	cmd.Flags().AddFlagSet(logs.Flags(&options))
+	completion.MachinesFlag(cmd)
+
 	return cmd
 }
 
