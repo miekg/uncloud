@@ -3,8 +3,10 @@ package machine
 import (
 	"context"
 	"fmt"
+	"os"
 	"strings"
 
+	"github.com/goccy/go-yaml"
 	"github.com/psviderski/uncloud/internal/cli"
 	"github.com/psviderski/uncloud/internal/cli/config"
 	"github.com/spf13/cobra"
@@ -13,6 +15,7 @@ import (
 type contextOptions struct {
 	context string
 	sshKey  string
+	write   bool
 }
 
 func NewContextCommand() *cobra.Command {
@@ -68,7 +71,10 @@ Connection methods:
 		fmt.Sprintf("Path to SSH private key for remote login (if not already added to SSH agent). (default %q)",
 			cli.DefaultSSHKeyPath),
 	)
-	// write flag,to save?
+	cmd.Flags().BoolVarP(
+		&opts.write, "write", "w", false,
+		"Write a new Uncloud config, by default the config is only printed to standard output.",
+	)
 
 	return cmd
 }
@@ -128,6 +134,12 @@ func listContext(ctx context.Context, uncli *cli.CLI, conn config.MachineConnect
 			machineConn.SSHGo = dest
 		}
 		connCfg = append(connCfg, machineConn)
+	}
+
+	if !opts.write {
+		encoder := yaml.NewEncoder(os.Stdout, yaml.Indent(2), yaml.IndentSequence(true))
+		encoder.Encode(connCfg)
+		return nil
 	}
 
 	uncli.Config.Contexts[contextName].Connections = connCfg
