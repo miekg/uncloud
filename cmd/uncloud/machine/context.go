@@ -29,14 +29,14 @@ This command adds or updates an (existing) context in your Uncloud config.
 Connection methods:
   [ssh://]user@host   - Use system 'ssh' command with full SSH config support (default, no prefix required)
   ssh+go://user@host  - Use Go's built-in SSH library`,
-		Example: `  # Initialise a new cluster with default settings.
-  uc machine context root@<your-server-ip>
+		Example: `  # Get the cluster context with default settings.
+  uc machine context -w root@<your-server-ip>
 
   # Add a new context named 'prod' in the Uncloud config (~/.config/uncloud/config.yaml).
-  uc machine context root@<your-server-ip> -c prod
+  uc machine context -w root@<your-server-ip> -c prod
 
   # A a new context with a non-root user and custom SSH port and key.
-  uc machine init ubuntu@<your-server-ip>:2222 -i ~/.ssh/mykey`,
+  uc machine context -w ubuntu@<your-server-ip>:2222 -i ~/.ssh/mykey`,
 		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			uncli := cmd.Context().Value("cli").(*cli.CLI)
@@ -124,9 +124,10 @@ func listContext(ctx context.Context, uncli *cli.CLI, conn config.MachineConnect
 
 	connCfg := []config.MachineConnection{}
 	for _, machine := range machines {
-		dest := config.NewSSHDestination(user, machine.Machine.PublicIp.String(), port)
+		addr, _ := machine.Machine.PublicIp.ToAddr()
+		dest := config.NewSSHDestination(user, addr.String(), port)
 
-		machineConn := config.MachineConnection{SSHKeyFile: opts.sshKey}
+		machineConn := config.MachineConnection{MachineID: machine.Machine.Id}
 		if conn.SSH != "" {
 			machineConn.SSH = dest
 		}
@@ -138,7 +139,13 @@ func listContext(ctx context.Context, uncli *cli.CLI, conn config.MachineConnect
 
 	if !opts.write {
 		encoder := yaml.NewEncoder(os.Stdout, yaml.Indent(2), yaml.IndentSequence(true))
-		encoder.Encode(connCfg)
+		contexts := map[string]*config.Context{
+			contextName: {
+				Connections: connCfg,
+			},
+		}
+
+		encoder.Encode(contexts)
 		return nil
 	}
 
