@@ -21,8 +21,9 @@ type contextOptions struct {
 func NewContextCommand() *cobra.Command {
 	opts := contextOptions{}
 	cmd := &cobra.Command{
-		Use:   "context [schema://]USER@HOST[:PORT]",
-		Short: "Add the cluster context to Uncloud configuration file by connecting to the remote machine.",
+		Aliases: []string{"context"},
+		Use:     "ctx [schema://]USER@HOST[:PORT]",
+		Short:   "Add the cluster context to Uncloud configuration file by connecting to the remote machine.",
 		Long: `Add the cluster context, or add new machines to an existing cluster context.
 This command adds or updates an (existing) context in your Uncloud config.
 
@@ -30,13 +31,13 @@ Connection methods:
   [ssh://]user@host   - Use system 'ssh' command with full SSH config support (default, no prefix required)
   ssh+go://user@host  - Use Go's built-in SSH library`,
 		Example: `  # Get the cluster context with default settings.
-  uc machine context -w root@<your-server-ip>
+  uc machine ctx -w root@<your-server-ip>
 
   # Add a new context named 'prod' in the Uncloud config (~/.config/uncloud/config.yaml).
-  uc machine context -w root@<your-server-ip> -c prod
+  uc machine ctx -w root@<your-server-ip> -c prod
 
-  # A a new context with a non-root user and custom SSH port and key.
-  uc machine context -w ubuntu@<your-server-ip>:2222 -i ~/.ssh/mykey`,
+  # Add a new context with a non-root user and custom SSH port and key.
+  uc machine ctx -w ubuntu@<your-server-ip>:2222 -i ~/.ssh/mykey`,
 		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			uncli := cmd.Context().Value("cli").(*cli.CLI)
