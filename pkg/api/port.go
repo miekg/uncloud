@@ -2,10 +2,12 @@ package api
 
 import (
 	"fmt"
+	"net"
 	"net/netip"
 	"slices"
 	"strconv"
 	"strings"
+	"unicode"
 )
 
 const (
@@ -23,6 +25,8 @@ type PortSpec struct {
 	Hostname string
 	// HostIP is the host IP to bind the PublishedPort to. Only valid in host mode.
 	HostIP netip.Addr
+	// Interface is the interface to bind the PublishedPort to. Only valid in host mode.
+	Interface net.Interface
 	// PublishedPort is the port number exposed outside the container.
 	// In ingress mode, this is the load balancer port. In host mode, this is the port bound on the host.
 	PublishedPort uint16
@@ -110,6 +114,9 @@ func (p *PortSpec) String() (string, error) {
 			} else {
 				parts = append(parts, p.HostIP.String())
 			}
+		}
+		if p.Interface.Name != "" {
+			parts = append(parts, p.Interface.Name)
 		}
 		parts = append(parts, fmt.Sprint(p.PublishedPort))
 		parts = append(parts, fmt.Sprint(p.ContainerPort))
@@ -211,7 +218,18 @@ func ParsePortSpec(port string) (PortSpec, error) {
 			}
 
 			if spec.HostIP, err = netip.ParseAddr(ip); err != nil {
-				return spec, fmt.Errorf("invalid host IP '%s': %w", parts[0], err)
+				// if single word, it's a interface name
+				ok := true
+				for _, c := range ip {
+					if !unicode.IsDigit(c) && !unicode.IsLetter(c) {
+						ok = false
+						break
+					}
+				}
+				if !ok {
+					return spec, fmt.Errorf("invalid host IP '%s': %w", parts[0], err)
+				}
+				spec.Interface.Name = ip
 			}
 		} else {
 			// Hostname may be empty.

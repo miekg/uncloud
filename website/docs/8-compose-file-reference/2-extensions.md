@@ -106,7 +106,7 @@ services:
 ### Attributes
 
 | Attribute     | Type                    | Default         | Description                                                                                                                                                        |
-|---------------|-------------------------|-----------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| ------------- | ----------------------- | --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `command`     | string / list           | (required)      | The command to run in the hook container (same format as the service's [`command`](https://github.com/compose-spec/compose-spec/blob/main/05-services.md#command)) |
 | `environment` | map / list of KEY=VALUE | -               | Additional env vars that override or extend the service's [`environment`](https://github.com/compose-spec/compose-spec/blob/main/05-services.md#environment)       |
 | `privileged`  | bool                    | service's value | Override the service's [`privileged`](https://github.com/compose-spec/compose-spec/blob/main/05-services.md#privileged) mode                                       |

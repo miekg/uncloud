@@ -5,6 +5,7 @@ import (
 	"net/netip"
 	"strconv"
 	"strings"
+	"unicode"
 
 	"github.com/compose-spec/compose-go/v2/types"
 	"github.com/psviderski/uncloud/pkg/api"
@@ -112,10 +113,22 @@ func convertServicePortConfigToPortSpec(port types.ServicePortConfig) (api.PortS
 	// Set host IP if specified
 	if port.HostIP != "" {
 		hostIP, err := netip.ParseAddr(port.HostIP)
-		if err != nil {
-			return spec, fmt.Errorf("invalid host IP %q: %w", port.HostIP, err)
+		if err == nil {
+			spec.HostIP = hostIP
+		} else {
+			// A single word signalling a interface name.
+			ok := true
+			for _, c := range port.HostIP {
+				if !unicode.IsDigit(c) && !unicode.IsLetter(c) {
+					ok = false
+					break
+				}
+			}
+			if !ok {
+				return spec, fmt.Errorf("invalid host IP or interface name %q: %w", port.HostIP, err)
+			}
+			spec.Interface.Name = port.HostIP
 		}
-		spec.HostIP = hostIP
 	}
 
 	// Validate the resulting spec

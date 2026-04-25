@@ -620,6 +620,21 @@ func (s *Server) CreateServiceContainer(
 		if p.HostIP.IsValid() {
 			portBindings[port][0].HostIP = p.HostIP.String()
 		}
+		if p.Interface.Name != "" {
+			addrs, err := addrsFromInterface(p.Interface)
+			if err != nil {
+				return nil, err
+			}
+			// p.HostIP must not valid, so the first IP can be set in the above added PortBinding, the rest is
+			// then just appended.
+			portBindings[port][0].HostIP = addrs[0]
+			for _, addr := range addrs[1:] {
+				portBindings[port] = append(portBindings[port], nat.PortBinding{
+					HostPort: strconv.Itoa(int(p.PublishedPort)),
+					HostIP:   addr,
+				})
+			}
+		}
 	}
 	hostConfig := &container.HostConfig{
 		CapAdd:       spec.Container.CapAdd,

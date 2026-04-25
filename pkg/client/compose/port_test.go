@@ -2,6 +2,7 @@ package compose
 
 import (
 	"context"
+	"net"
 	"net/netip"
 	"testing"
 
@@ -56,6 +57,15 @@ func TestConvertStandardPortsToPortSpecs(t *testing.T) {
 			},
 			expected: []api.PortSpec{
 				{ContainerPort: 8080, PublishedPort: 80, Protocol: "tcp", Mode: "host", HostIP: mustParseAddr("::1")},
+			},
+		},
+		{
+			name: "host interface",
+			ports: []types.ServicePortConfig{
+				{Target: 8080, Published: "80", Protocol: "tcp", HostIP: "enp1s0", Mode: "host"},
+			},
+			expected: []api.PortSpec{
+				{ContainerPort: 8080, PublishedPort: 80, Protocol: "tcp", Mode: "host", Interface: net.Interface{Name: "enp1s0"}},
 			},
 		},
 	}
@@ -211,7 +221,7 @@ func TestConvertServicePortConfigToPortSpec(t *testing.T) {
 			port: types.ServicePortConfig{
 				Target:    8080,
 				Published: "80",
-				HostIP:    "invalid",
+				HostIP:    "10.invalid",
 			},
 			wantErr: "invalid host IP",
 		},

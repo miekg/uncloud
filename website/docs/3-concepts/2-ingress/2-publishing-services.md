@@ -48,17 +48,20 @@ network interface(s). This is useful for non-HTTP services that need direct port
 [host_ip:]host_port:container_port[/protocol]@host
 ```
 
-- `host_ip` (optional): The IP address on the host to bind to. If omitted, binds to all interfaces.
+- `host_ip` (optional): The IP address on the host to bind to. If omitted, binds to all interfaces. If this is
+  not an IP address, it is interpreted as the interface and it will use all public IP addresses from that
+  interface.
 - `host_port`: The port number on the host to bind to.
 - `container_port`: The port number within the container that's listening for traffic.
 - `protocol` (optional): `tcp` or `udp` (default: `tcp`)
 
 | Port value                   | Description                                                                          |
-|------------------------------|--------------------------------------------------------------------------------------|
+| ---------------------------- | ------------------------------------------------------------------------------------ |
 | `8000/http`                  | Publish port 8000 as HTTP via Caddy using hostname `<service-name>.<cluster-domain>` |
 | `app.example.com:8080/https` | Publish port 8080 as HTTPS via Caddy using hostname `app.example.com`                |
 | `127.0.0.1:5432:5432@host`   | Bind TCP port 5432 to host port 5432 on loopback interface only                      |
 | `53:5353/udp@host`           | Bind UDP port 5353 to host port 53 on all network interfaces                         |
+| `ens1p0:53:5353/udp@host`    | Bind UDP port 5353 to host port 53 on the "ens1p0" interface                         |
 
 :::warning
 
@@ -78,8 +81,8 @@ services:
     image: app:latest
     x-ports:
       - example.com:8000/https
-      - www.example.com:8000/https  # The same port can be published with multiple hostnames
-      - api.domain.tld:9000/https   # Another port can be published with a different hostname
+      - www.example.com:8000/https # The same port can be published with multiple hostnames
+      - api.domain.tld:9000/https # Another port can be published with a different hostname
 ```
 
 ## Custom Caddy configuration
@@ -138,7 +141,7 @@ custom global configuration.
 The following functions and variables are available:
 
 | Template                              | Description                                                                                   |
-|---------------------------------------|-----------------------------------------------------------------------------------------------|
+| ------------------------------------- | --------------------------------------------------------------------------------------------- |
 | `{{upstreams [service-name] [port]}}` | A space-separated list of healthy container IPs for the current or specified service and port |
 | `{{.Name}}`                           | The name of the service the config belongs to                                                 |
 | `{{.Upstreams}}`                      | A map of all service names to their healthy container IPs                                     |
@@ -149,38 +152,49 @@ changes.
 **Examples:**
 
 1. Current service upstreams, default port:
+
    ```caddyfile
    reverse_proxy {{upstreams}}
    ```
+
    ↓
 
    ```caddyfile
    reverse_proxy 10.210.1.3 10.210.2.5
    ```
+
 2. Current service upstreams, port 8000:
+
    ```caddyfile
    reverse_proxy {{upstreams 8000}}
    ```
+
    ↓
 
    ```caddyfile
    reverse_proxy 10.210.1.3:8000 10.210.2.5:8000
    ```
+
 3. Current service upstreams with `https` scheme:
+
    ```caddyfile
    reverse_proxy {{- range $ip := index .Upstreams .Name}} https://{{$ip}}{{end}}
    ```
+
    ↓
 
    ```caddyfile
    reverse_proxy https://10.210.1.3 https://10.210.2.5
    ```
+
 4. `api` service upstreams, port 9000:
+
    ```caddyfile
    handle_path /api/* {
        reverse_proxy {{upstreams "api" 9000}}
    }
    ```
+
    ↓
 
    ```caddyfile
