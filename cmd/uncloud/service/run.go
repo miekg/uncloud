@@ -101,7 +101,7 @@ func NewRunCommand(groupID string) *cobra.Command {
 			// TODO: add support for publishing L4 tcp/udp ports.
 			//"  -p 9000:8080                   Publish port 8080 as TCP port 9000 via reverse proxy\n"+
 			"  -p 53:5353/udp@host            Bind UDP port 5353 to host port 53"+
-			"  -p enp1s0:54:5443@host         Bind TCP port 5453 to host port 54 on interface enp1s0")
+			"  -p enp1s0:54:5454@host         Bind TCP port 5454 to host port 54 on interface enp1s0")
 	cmd.Flags().StringVar(&opts.pull, "pull", api.PullPolicyMissing,
 		fmt.Sprintf("Pull image from the registry before running service containers ('%s', '%s', '%s').",
 			api.PullPolicyAlways, api.PullPolicyMissing, api.PullPolicyNever))
