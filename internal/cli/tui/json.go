@@ -9,7 +9,7 @@ import (
 
 type Objects []map[string]string
 
-// TableToObjects convert the table to Objects that can then be used for json marshalling. Basic usage:
+// TableToObjects converts the table to Objects that can then be used for json marshalling. Basic usage:
 //
 //	 type Machines struct { // define a wrapper type
 //		 Machines []map[string]string `json:"machines"`
@@ -34,7 +34,8 @@ func TableToObjects(t *table.Table) Objects {
 	return objects
 }
 
-// camelcase returns a strings the is camel cased for use as JSON keys.
+// camelcase returns a string that is camelCased for use as a JSON key, i.e. "WIREGUARD ENDPOINT" - usually
+// the input is all capitals, becomes wireguardEndpoint.
 func camelcase(s string) string {
 	if len(s) == 0 {
 		return ""
