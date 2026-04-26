@@ -82,7 +82,7 @@ func list(ctx context.Context, uncli *cli.CLI, opts listOptions) error {
 
 	if opts.json {
 		type Machines struct {
-			Machines []map[string]string `json:"machines"`
+			Machines tui.Objects `json:"machines"`
 		}
 		machines := Machines{Machines: tui.TableToObjects(t)}
 		data, _ := json.MarshalIndent(machines, "", "  ")
