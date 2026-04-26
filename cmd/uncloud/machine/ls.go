@@ -2,6 +2,7 @@ package machine
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"net/netip"
 	"strings"
@@ -12,20 +13,31 @@ import (
 	"github.com/spf13/cobra"
 )
 
+type listOptions struct {
+	json bool
+}
+
 func NewListCommand() *cobra.Command {
+	opts := listOptions{}
+
 	cmd := &cobra.Command{
 		Use:     "ls",
 		Aliases: []string{"list"},
 		Short:   "List machines in a cluster.",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			uncli := cmd.Context().Value("cli").(*cli.CLI)
-			return list(cmd.Context(), uncli)
+			return list(cmd.Context(), uncli, opts)
 		},
 	}
+
+	cmd.Flags().BoolVarP(&opts.json, "json", "j", false,
+		"Output JSON.",
+	)
+
 	return cmd
 }
 
-func list(ctx context.Context, uncli *cli.CLI) error {
+func list(ctx context.Context, uncli *cli.CLI, opts listOptions) error {
 	client, err := uncli.ConnectCluster(ctx)
 	if err != nil {
 		return fmt.Errorf("connect to cluster: %w", err)
@@ -66,6 +78,16 @@ func list(ctx context.Context, uncli *cli.CLI) error {
 			strings.Join(endpoints, tui.Faint.Render(", ")),
 			member.Machine.Id,
 		)
+	}
+
+	if opts.json {
+		type Machines struct {
+			Machines []map[string]string `json:"machines"`
+		}
+		machines := Machines{Machines: tui.TableToObjects(t)}
+		data, _ := json.MarshalIndent(machines, "", "  ")
+		fmt.Println(string(data))
+		return nil
 	}
 
 	fmt.Println(t)
