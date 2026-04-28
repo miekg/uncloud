@@ -7,7 +7,7 @@ import (
 
 	"charm.land/huh/v2"
 	"github.com/psviderski/uncloud/internal/cli"
-	"github.com/psviderski/uncloud/internal/completion"
+	"github.com/psviderski/uncloud/internal/cli/completion"
 	"github.com/spf13/cobra"
 )
 

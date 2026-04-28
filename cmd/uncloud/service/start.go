@@ -7,7 +7,7 @@ import (
 
 	"github.com/docker/compose/v2/pkg/progress"
 	"github.com/psviderski/uncloud/internal/cli"
-	"github.com/psviderski/uncloud/internal/completion"
+	"github.com/psviderski/uncloud/internal/cli/completion"
 	"github.com/spf13/cobra"
 )
 
