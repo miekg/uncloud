@@ -72,6 +72,17 @@ func provisionMachine(ctx context.Context, exec sshexec.Executor, version string
 						"   echo '%[1]s ALL=(ALL) NOPASSWD:ALL' | sudo tee /etc/sudoers.d/%[1]s",
 					user)
 			}
+			if strings.Contains(err.Error(), "not in the sudoers file") {
+				return fmt.Errorf(
+					"user '%[1]s' is not in the sudo group or sudoers file so cannot use sudo, but Uncloud needs "+
+						"passwordless sudo or root access to install and configure the uncloudd daemon on the remote "+
+						"machine.\n\n"+
+						"Possible solutions:\n"+
+						"1. Use root user or a user with passwordless sudo instead.\n"+
+						"2. Grant passwordless sudo to the user '%[1]s' by running on the remote machine as root:\n"+
+						"   echo '%[1]s ALL=(ALL) NOPASSWD:ALL' > /etc/sudoers.d/%[1]s",
+					user)
+			}
 			return fmt.Errorf("sudo command failed for user '%s': %w. "+
 				"Please ensure the user has sudo privileges or use root user instead", user, err)
 		}

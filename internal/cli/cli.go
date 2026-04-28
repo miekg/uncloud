@@ -547,26 +547,35 @@ func provisionOrConnectRemoteMachine(
 	}
 
 	// Use the system 'ssh' command (default).
-	exec := sshexec.NewSSHCLIRemote(
-		remoteMachine.User,
-		remoteMachine.Host,
-		remoteMachine.Port,
-		remoteMachine.KeyPath,
-	)
-
-	if !skipInstall {
-		if err := provisionMachine(ctx, exec, version); err != nil {
-			return nil, fmt.Errorf("provision machine: %w", err)
-		}
-	}
-
 	sshConfig := &connector.SSHConnectorConfig{
 		User:    remoteMachine.User,
 		Host:    remoteMachine.Host,
 		Port:    remoteMachine.Port,
 		KeyPath: remoteMachine.KeyPath,
 	}
-	machineClient, err := client.New(ctx, connector.NewSSHCLIConnector(sshConfig))
+	conn := connector.NewSSHCLIConnector(sshConfig)
+
+	if !skipInstall {
+		exec := sshexec.NewSSHCLIRemote(
+			remoteMachine.User,
+			remoteMachine.Host,
+			remoteMachine.Port,
+			remoteMachine.KeyPath,
+		)
+		if err := provisionMachine(ctx, exec, version); err != nil {
+			return nil, fmt.Errorf("provision machine: %w", err)
+		}
+
+		if remoteMachine.User != rootUser {
+			// provisionMachine has just added the user to the uncloud group. Any SSH ControlMaster left over from
+			// a previous uc invocation (e.g. a failed uc command against the uninitialised machine) still holds
+			// the old user groups and would deny access to /run/uncloud/uncloud.sock. Close the current session
+			// if it exists so the next session picks up the new groups.
+			conn.CloseControlMaster(ctx)
+		}
+	}
+
+	machineClient, err := client.New(ctx, conn)
 	if err != nil {
 		return nil, fmt.Errorf("connect to remote machine: %w", err)
 	}

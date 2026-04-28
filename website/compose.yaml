@@ -23,3 +23,5 @@ services:
     x-machines:
       - uc-prod-us2
       - uc-prod-ap1
+
+x-context: uc-prod

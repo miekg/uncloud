@@ -23,6 +23,10 @@ cleanup() {
 }
 trap cleanup INT TERM EXIT
 
+# Remove stale Docker and containerd pid files left over from the previous container run. They persist
+# across restarts because /run lives in the container's overlay filesystem, not a tmpfs.
+rm -f /run/docker.pid /run/docker/containerd/containerd.pid
+
 dind dockerd &
 echo "Waiting for Docker in Docker to be ready..."
 timeout 60s sh -c "until docker info &> /dev/null; do sleep 0.5; done"

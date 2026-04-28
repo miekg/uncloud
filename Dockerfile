@@ -46,7 +46,7 @@ RUN apk --no-cache add crane
 RUN crane pull --platform ${TARGETOS}/${TARGETARCH} "${CORROSION_IMAGE}" /corrosion.tar
 
 # Uncloud-in-Docker (ucind) image for running Uncloud test clusters using Docker.
-FROM docker:27.3.1-dind AS ucind
+FROM docker:29.4.0-dind AS ucind
 # Create system group and user 'uncloud'.
 RUN addgroup -S uncloud && adduser -SHD -h /nonexistent -G uncloud -g "" uncloud
 RUN apk --no-cache add \
@@ -54,7 +54,7 @@ RUN apk --no-cache add \
     wireguard-tools
 
 COPY --from=corrosion-image-tarball /corrosion.tar /images/corrosion.tar
-COPY scripts/docker/dind scripts/docker/entrypoint.sh /usr/local/bin/
+COPY scripts/docker/entrypoint.sh /usr/local/bin/
 COPY --from=uncloudd /build/uncloudd /usr/local/bin/
 
 ENTRYPOINT ["entrypoint.sh"]

@@ -112,6 +112,7 @@ func (c *Controller) WatchAndSyncContainers(ctx context.Context) error {
 				events.ActionDie,
 				events.ActionOOM,
 				events.ActionDestroy,
+				events.ActionHealthStatusRunning,
 				events.ActionHealthStatusHealthy,
 				events.ActionHealthStatusUnhealthy:
 

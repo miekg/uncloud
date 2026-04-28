@@ -100,7 +100,7 @@ platform, whether you're running on a $5 VPS, a spare Mac mini, or a rack of bar
    curl -fsS https://get.uncloud.run/install.sh | sh
    ```
 
-   See [Installation](https://uncloud.run/docs/getting-started/install-cli) for more options.
+   See [Installation](https://uncloud.run/docs/getting-started/install-cli) for more options. There's also a [nightly rolling release](https://github.com/psviderski/uncloud/releases/tag/nightly) available if you want to try the latest features and fixes before they're included in an official release.
 
 2. Initialise your first machine:
 

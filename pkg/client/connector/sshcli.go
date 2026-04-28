@@ -9,6 +9,8 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+	"sync"
+	"time"
 
 	"github.com/docker/cli/cli/connhelper/commandconn"
 	"github.com/psviderski/uncloud/internal/grpcversion"
@@ -23,6 +25,10 @@ type SSHCLIConnector struct {
 	config SSHConnectorConfig
 	// Path to SSH control socket for connection reuse.
 	controlSockPath string
+	// fwdCheckOnce ensures the TCP forwarding check runs only once.
+	fwdCheckOnce sync.Once
+	// fwdCheckErr caches the result of the TCP forwarding check.
+	fwdCheckErr error
 }
 
 func NewSSHCLIConnector(cfg *SSHConnectorConfig) *SSHCLIConnector {
@@ -39,9 +45,13 @@ func controlSocketPath() string {
 	// of the ProxyJump option. This ensures that shared connections are uniquely identified.
 	sockName := fmt.Sprintf("uc_control_%%C.sock")
 
-	// Prefer XDG_RUNTIME_DIR if set, fall back to ~/.ssh if it exists.
+	// Prefer XDG_RUNTIME_DIR if set and the directory exists, fall back to ~/.ssh if it exists.
 	if dir := os.Getenv("XDG_RUNTIME_DIR"); dir != "" {
-		return filepath.Join(dir, sockName)
+		// On WSL2 without systemd, XDG_RUNTIME_DIR may be set to /run/user/$UID that doesn't actually exist,
+		// so existence must be verified before use: https://github.com/psviderski/uncloud/issues/319.
+		if fi, err := os.Stat(dir); err == nil && fi.IsDir() {
+			return filepath.Join(dir, sockName)
+		}
 	}
 	if home, err := os.UserHomeDir(); err == nil {
 		sshDir := filepath.Join(home, ".ssh")
@@ -125,6 +135,8 @@ func (c *SSHCLIConnector) buildSSHArgs() []string {
 	// Disable interactive prompts (e.g., passphrase input) to prevent interference with the TUI.
 	// Authentication must succeed non-interactively via SSH agent or unencrypted key.
 	args = append(args, "-o", "BatchMode=yes")
+	// Disable host key checking for parity with go+ssh.
+	args = append(args, "-o", "StrictHostKeyChecking=accept-new")
 	// Disable pseudo-terminal allocation to prevent SSH from executing as a login shell.
 	args = append(args, "-T")
 
@@ -158,6 +170,9 @@ func (c *SSHCLIConnector) DialContext(ctx context.Context, network, address stri
 	if network != "tcp" {
 		return nil, fmt.Errorf("unsupported network type: %s", network)
 	}
+	if err := c.CheckTCPForwarding(ctx); err != nil {
+		return nil, err
+	}
 
 	args := append(c.buildSSHArgs(), "-W", address)
 	conn, err := commandconn.New(ctx, "ssh", args...)
@@ -166,6 +181,44 @@ func (c *SSHCLIConnector) DialContext(ctx context.Context, network, address stri
 	}
 
 	return conn, nil
+}
+
+// CheckTCPForwarding verifies that TCP forwarding is enabled on the remote SSH server. It probes the server once
+// and caches the result for subsequent calls. Returns an error with actionable instructions if forwarding is disabled.
+func (c *SSHCLIConnector) CheckTCPForwarding(ctx context.Context) error {
+	c.fwdCheckOnce.Do(func() {
+		// Probe TCP forwarding by requesting a forward to 127.0.0.1:1 (a port almost never in use).
+		// If forwarding is disabled, sshd rejects the channel. The error message differs depending on
+		// whether the connection goes through a ControlMaster mux or directly:
+		//   - Multiplexed: "Session open refused by peer"
+		//   - Direct: "administratively prohibited"
+		probeCtx, cancel := context.WithTimeout(ctx, 10*time.Second)
+		defer cancel()
+
+		args := append(c.buildSSHArgs(), "-W", "127.0.0.1:1")
+		probe := exec.CommandContext(probeCtx, "ssh", args...)
+		output, _ := probe.CombinedOutput()
+		outStr := string(output)
+		if strings.Contains(outStr, "administratively prohibited") ||
+			strings.Contains(outStr, "Session open refused by peer") {
+			c.fwdCheckErr = fmt.Errorf(
+				"SSH TCP forwarding appears to be disabled on '%s': ensure 'AllowTcpForwarding yes' is set "+
+					"in /etc/ssh/sshd_config on the remote machine and restart sshd (sudo systemctl restart ssh)",
+				c.config.Destination(),
+			)
+		}
+	})
+	return c.fwdCheckErr
+}
+
+// CloseControlMaster terminates the SSH ControlMaster process for this destination so the next connection starts
+// a fresh SSH session. No-op if no master is running or the control socket is not configured. Errors are ignored.
+func (c *SSHCLIConnector) CloseControlMaster(ctx context.Context) {
+	if c.controlSockPath == "" {
+		return
+	}
+	args := append(c.buildSSHArgs(), "-O", "exit")
+	_ = exec.CommandContext(ctx, "ssh", args...).Run()
 }
 
 func (c *SSHCLIConnector) Close() error {

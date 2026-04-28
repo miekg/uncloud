@@ -84,9 +84,12 @@ func remove(ctx context.Context, uncli *cli.CLI, nameOrID string, opts removeOpt
 			return fmt.Errorf("list machines: %w", err)
 		}
 		if len(allMachines) > 1 {
-			return errors.New("cannot remove the machine you are currently connected to. " +
-				"Please connect to another machine in the cluster and try again. " +
-				"Use --connect flag or update 'connections' for the cluster context in your Uncloud config")
+			return fmt.Errorf("cannot remove the machine you are currently connected to. "+
+				"Please connect to another machine in the cluster and try again. "+
+				"Change the default connection for the current cluster using 'uc ctx conn' or "+
+				"manually update 'connections' in your Uncloud config (%s). "+
+				"For more information on connecting to a cluster, see "+
+				"https://uncloud.run/docs/concepts/clusters/connecting/", uncli.Config.Path())
 			// It's ok to remove the proxy machine if it's the last one in the cluster.
 		}
 	}
