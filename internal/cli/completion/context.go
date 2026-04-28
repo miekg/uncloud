@@ -4,6 +4,7 @@ import (
 	"context"
 	"maps"
 	"slices"
+	"strings"
 
 	"github.com/psviderski/uncloud/internal/cli"
 	"github.com/spf13/cobra"
@@ -16,6 +17,9 @@ func Contexts(ctx context.Context, uncli *cli.CLI, args []string, toComplete str
 	for _, context := range contexts {
 		if slices.Contains(args, context) {
 			continue
+		}
+		if strings.HasPrefix(context, toComplete) {
+			names = append(names, context)
 		}
 		names = append(names, context)
 	}
