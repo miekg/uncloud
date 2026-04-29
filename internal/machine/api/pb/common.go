@@ -27,15 +27,6 @@ func (ip *IP) Equal(other *IP) bool {
 	return bytes.Equal(ip.Ip, other.Ip)
 }
 
-func (ip *IP) ToString() string {
-	// Has to be ToString, because String is generated (and doesn't do the right thing).
-	if ip == nil {
-		return ""
-	}
-	addr, _ := ip.ToAddr()
-	return addr.String()
-}
-
 func (ip *IP) MarshalJSON() ([]byte, error) {
 	if ip == nil {
 		return nil, nil

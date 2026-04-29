@@ -58,10 +58,7 @@ func list(ctx context.Context, uncli *cli.CLI, opts listOptions) error {
 		type Machines struct {
 			Machines api.MachineMembersList `json:"Machines"`
 		}
-		data, err := json.MarshalIndent(Machines{machines}, "", "  ")
-		if err != nil {
-			return fmt.Errorf("marshal machines: %w", err)
-		}
+		data, _ := json.MarshalIndent(Machines{machines}, "", "  ")
 		fmt.Println(string(data))
 		return nil
 	}
