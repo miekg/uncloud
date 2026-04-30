@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"log/slog"
 	"net"
-	"net/http"
 	"net/netip"
 	"os"
 	"os/user"
@@ -192,8 +191,6 @@ type Machine struct {
 	// and aggregates responses.
 	localProxyServer *grpc.Server
 
-	prometheusServer *prometheus.Server
-
 	// mu protects the Machine from concurrent reads and writes.
 	mu sync.RWMutex
 }
@@ -263,7 +260,6 @@ func NewMachine(config *Config) (*Machine, error) {
 			proxy.TransparentHandler(proxyDirector.Director),
 		),
 	)
-	prometheusServer := prometheus.New()
 
 	m := &Machine{
 		config:           *config,
@@ -277,7 +273,6 @@ func NewMachine(config *Config) (*Machine, error) {
 		dockerService:    dockerService,
 		localProxyServer: localProxyServer,
 		proxyDirector:    proxyDirector,
-		prometheusServer: prometheusServer,
 	}
 
 	// Machine IP will only be available after the machine is initialised as a cluster member so wrap it in a function.
@@ -412,19 +407,6 @@ func (m *Machine) Run(ctx context.Context) error {
 		return nil
 	})
 
-	// Start the Prometheus server. This listens on the container network, so it can be scraped by an
-	// incluster prometheus.
-	promListener, err := net.Listen("tcp", m.IP().String()+prometheus.DefaultPort)
-	if err != nil {
-		return fmt.Errorf("listen prometheus server: %w", err)
-	}
-	errGroup.Go(func() error {
-		slog.Info("Starting prometheus server.")
-		if err := m.prometheusServer.Serve(promListener); err != nil && !errors.Is(err, http.ErrServerClosed) {
-			return fmt.Errorf("local machine prometheus server failed: %w", err)
-		}
-		return nil
-	})
 	// Signal that the machine is ready.
 	close(m.started)
 
@@ -523,6 +505,7 @@ func (m *Machine) Run(ctx context.Context) error {
 				dnsServer,
 				dnsResolver,
 				unreg,
+				prometheus.New(m.IP()),
 			)
 			m.mu.Unlock()
 			if err != nil {
@@ -557,9 +540,6 @@ func (m *Machine) Run(ctx context.Context) error {
 		// Close the proxy director to close all backend connections.
 		m.proxyDirector.Close()
 		slog.Info("Local API proxy server stopped.")
-
-		m.prometheusServer.Shutdown(context.TODO())
-		slog.Info("Prometheus server stopped.")
 
 		// Clean up the machine data and resources if the machine shutdown was initiated by a reset.
 		if m.resetting {
