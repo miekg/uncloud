@@ -2270,7 +2270,7 @@ func TestPrometheus(t *testing.T) {
 		runCurl := func(t *testing.T, url string) string {
 			curlOutput, err := execInContainerAndReadOutput(
 				t, ctx, cli, curlServiceName, queryContainer.Container.ID,
-				[]string{"curl", url},
+				[]string{"curl", "-s", url},
 			)
 			require.NoError(t, err)
 			return curlOutput
