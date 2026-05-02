@@ -2271,7 +2271,7 @@ func TestPrometheus(t *testing.T) {
 		runCurl := func(t *testing.T, url string) string {
 			curlOutput, err := execInContainerAndReadOutput(
 				t, ctx, cli, curlServiceName, curlContainer.Container.ID,
-				[]string{"curl", url},
+				[]string{"curl", "-s", url},
 			)
 			require.NoError(t, err)
 			return curlOutput
@@ -2281,7 +2281,7 @@ func TestPrometheus(t *testing.T) {
 			promIP := network.MachineIP(netip.PrefixFrom(curlContainer.Container.UncloudNetworkIP(), 24)).String()
 			endpoint := net.JoinHostPort(promIP, strconv.Itoa(prometheus.Port))
 			curlOutput := runCurl(t, "http://"+endpoint+"/metrics")
-			t.Logf("cURL metrics output:\n%s", curlOutput)
+			t.Logf("cURL metrics output from %s:\n%s", endpoint, curlOutput)
 
 			assert.Contains(t, curlOutput, "uncloud_uncloudd_build_info")
 		})
