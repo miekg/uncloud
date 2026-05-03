@@ -212,8 +212,11 @@ func (cc *clusterController) Run(ctx context.Context) error {
 		return nil
 	})
 
-	slog.Info("Starting periodic image pruning.")
-	cc.dockerCtrl.PruneImages(ctx)
+	errGroup.Go(func() error {
+		slog.Info("Starting periodic image pruning.")
+		cc.dockerCtrl.PruneImages(ctx)
+		return nil
+	})
 
 	if cc.unregistry != nil {
 		errGroup.Go(func() error {
