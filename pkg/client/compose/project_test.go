@@ -296,6 +296,20 @@ networks:
 `,
 			warnCount: 0,
 		},
+		{
+			name: "relative volume sources",
+			composeYAML: `services:
+  app:
+    image: myapp:latest
+    volumes:
+      - ./mypath/conf:/conf:ro
+      - data:/var/lib/data
+
+volumes:
+  data:
+`,
+			warnCount: 1,
+		},
 	}
 
 	for _, tt := range tests {
