@@ -129,9 +129,9 @@ func checkRelativeVolumeMount(data any, _ tree.Path, _ bool) (any, error) {
 	}
 	if strings.HasPrefix(source, "./") || strings.HasPrefix(source, "../") { // only check actual paths, not volumes _names_
 		// uc run also warns against this
-		tui.PrintWarning("Invalid volume mount, volume name '" + source + "' is relative. If you intended to pass a host " +
-			"host directory or file, use absolute path, or configs might be better suited for this use case. " +
-			"See https://docs.docker.com/reference/compose-file/configs/")
+		return nil, fmt.Errorf("invalid volume mount, volume name '%s' is relative. If you intended to pass a host "+
+			"host directory or file, use absolute path, or configs might be better suited for this use case. "+
+			"See https://docs.docker.com/reference/compose-file/configs/", source)
 	}
 
 	return data, nil
