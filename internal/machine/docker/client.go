@@ -281,6 +281,21 @@ func (c *Client) InspectImage(ctx context.Context, id string) ([]api.MachineImag
 	return images, nil
 }
 
+// RemoveImage removes an image with the given ID.
+func (c *Client) RemoveImage(ctx context.Context, id string, force bool) error {
+	_, err := c.GRPCClient.RemoveImage(ctx, &pb.RemoveImageRequest{
+		Id:    id,
+		Force: force,
+	})
+	if err != nil {
+		if status.Convert(err).Code() == codes.NotFound {
+			return errdefs.NotFound(err)
+		}
+	}
+
+	return err
+}
+
 // InspectRemoteImage returns the image metadata for an image in a remote registry using the machine's Docker auth
 // credentials if necessary. If the response from a machine doesn't contain an error, the api.RemoteImage will either
 // contain an IndexManifest or an ImageManifest.
