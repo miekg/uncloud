@@ -24,7 +24,7 @@ type PortSpec struct {
 	// HostIP is the host IP to bind the PublishedPort to. Only valid in host mode.
 	HostIP netip.Addr
 	// HostPrefix is the host prefix IP to bind the PublishedPort to. Only valid in host mode. Either HostIP
-	// is set of HostPrefix
+	// is set or HostPrefix
 	HostPrefix netip.Prefix
 	// PublishedPort is the port number exposed outside the container.
 	// In ingress mode, this is the load balancer port. In host mode, this is the port bound on the host.
