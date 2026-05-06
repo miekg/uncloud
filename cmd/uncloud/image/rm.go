@@ -112,9 +112,7 @@ func remove(ctx context.Context, uncli *cli.CLI, names []string, opts removeOpti
 			return fmt.Errorf("confirm removal: %w", err)
 		}
 		if !confirmed {
-			// tODO: cancelled
-			fmt.Println("Cancelled. No images were removed.")
-			return nil
+			return cli.Cancelled("Cancelled. No images were removed.")
 		}
 	}
 
