@@ -553,6 +553,17 @@ func TestParsePortSpec(t *testing.T) {
 				Mode:          PortModeHost,
 			},
 		},
+		{
+			name: "host mode with prefix and protocol",
+			port: "192.168.76.0/24:80:8080/udp@host",
+			expected: PortSpec{
+				HostPrefix:    netip.MustParsePrefix("192.168.76.0/24"),
+				PublishedPort: 80,
+				ContainerPort: 8080,
+				Protocol:      ProtocolUDP,
+				Mode:          PortModeHost,
+			},
+		},
 
 		// Error cases.
 		{
@@ -598,7 +609,7 @@ func TestParsePortSpec(t *testing.T) {
 		{
 			name:    "multiple protocols",
 			port:    "8080/tcp/udp",
-			wantErr: "too many '/' symbols",
+			wantErr: "invalid container port",
 		},
 		{
 			name:    "invalid protocol",
@@ -670,6 +681,11 @@ func TestParsePortSpec(t *testing.T) {
 			name:    "hostname with invalid published port",
 			port:    "app.example.com:invalid:8080@host",
 			wantErr: "invalid published port",
+		},
+		{
+			name:    "invalid prefix",
+			port:    "192.168.76.0/45:53:5353/udp@host",
+			wantErr: "invalid host IP",
 		},
 	}
 

@@ -23,6 +23,9 @@ type PortSpec struct {
 	Hostname string
 	// HostIP is the host IP to bind the PublishedPort to. Only valid in host mode.
 	HostIP netip.Addr
+	// HostPrefix is the host prefix IP to bind the PublishedPort to. Only valid in host mode. Either HostIP
+	// is set of HostPrefix
+	HostPrefix netip.Prefix
 	// PublishedPort is the port number exposed outside the container.
 	// In ingress mode, this is the load balancer port. In host mode, this is the port bound on the host.
 	PublishedPort uint16
@@ -111,6 +114,10 @@ func (p *PortSpec) String() (string, error) {
 				parts = append(parts, p.HostIP.String())
 			}
 		}
+		if p.HostPrefix.IsValid() {
+			parts = append(parts, p.HostPrefix.String())
+		}
+
 		parts = append(parts, fmt.Sprint(p.PublishedPort))
 		parts = append(parts, fmt.Sprint(p.ContainerPort))
 
@@ -138,24 +145,33 @@ func ParsePortSpec(port string) (PortSpec, error) {
 		spec.Mode = PortModeHost
 	}
 	port = parts[0]
+	protocol := ""
 
 	// Parse protocol.
 	parts = strings.Split(port, "/")
-	if len(parts) > 2 {
+	if len(parts) > 3 {
 		return spec, fmt.Errorf("too many '/' symbols")
 	}
 	specifiedProtocol := ""
-	if len(parts) == 2 {
-		protocol := parts[1]
-		switch protocol {
-		case ProtocolHTTP, ProtocolHTTPS, ProtocolTCP, ProtocolUDP:
-			spec.Protocol = protocol
-			specifiedProtocol = protocol
-		default:
-			return spec, fmt.Errorf("unsupported protocol: '%s'", protocol)
-		}
+	switch len(parts) {
+	case 2:
+		// 53:5353/udp@host
+		port = parts[0]
+		protocol = parts[1]
+	case 3:
+		// 127.0.0.0/24:53:5353/udp@host
+		protocol = parts[2]
+		port = parts[0] + "/" + parts[1]
 	}
-	port = parts[0]
+
+	switch protocol {
+	case "":
+	case ProtocolHTTP, ProtocolHTTPS, ProtocolTCP, ProtocolUDP:
+		spec.Protocol = protocol
+		specifiedProtocol = protocol
+	default:
+		return spec, fmt.Errorf("unsupported protocol: '%s'", protocol)
+	}
 
 	// Parse hostname/host IP and ports.
 	parts = splitPortParts(port)
@@ -211,7 +227,11 @@ func ParsePortSpec(port string) (PortSpec, error) {
 			}
 
 			if spec.HostIP, err = netip.ParseAddr(ip); err != nil {
-				return spec, fmt.Errorf("invalid host IP '%s': %w", parts[0], err)
+				spec.HostPrefix, err = netip.ParsePrefix(ip)
+				if err != nil {
+					// error with the original error
+					return spec, fmt.Errorf("invalid host IP '%s': %w", parts[0], err)
+				}
 			}
 		} else {
 			// Hostname may be empty.
