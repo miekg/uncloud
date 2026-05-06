@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"strings"
 
 	"github.com/psviderski/uncloud/internal/cli"
 	"github.com/psviderski/uncloud/internal/cli/completion"
@@ -96,11 +95,8 @@ func remove(ctx context.Context, uncli *cli.CLI, names []string, opts removeOpti
 			}
 
 			for _, img := range machineImage.Images {
-				id := strings.TrimPrefix(img.ID, "sha256:")[:12]
-				name := "<none>"
-				if len(img.RepoTags) > 0 && img.RepoTags[0] != "<none>:<none>" {
-					name = img.RepoTags[0]
-				}
+				id := normalizeID(img.ID)
+				name := normalizeName(img)
 
 				fmt.Printf(" • '%s' ('%s') on machine '%s'\n", name, id, machineName)
 			}
@@ -124,11 +120,8 @@ func remove(ctx context.Context, uncli *cli.CLI, names []string, opts removeOpti
 		}
 
 		for _, img := range machineImage.Images {
-			id := strings.TrimPrefix(img.ID, "sha256:")[:12]
-			name := "<none>"
-			if len(img.RepoTags) > 0 && img.RepoTags[0] != "<none>:<none>" {
-				name = img.RepoTags[0]
-			}
+			id := normalizeID(img.ID)
+			name := normalizeName(img)
 
 			if err := client.RemoveImage(ctx, machineImage.Metadata.Machine, img.ID, opts.force); err != nil {
 				if !errors.Is(err, api.ErrNotFound) {
