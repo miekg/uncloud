@@ -10,6 +10,7 @@ import "google/protobuf/timestamp.proto";
 service Caddy {
   // GetConfig retrieves the current Caddy configuration from the machine.
   rpc GetConfig(google.protobuf.Empty) returns (GetCaddyConfigResponse);
+  rpc SyncFile(SyncFileRequest) return (google.protobuf.Empty);
 }
 
 message GetCaddyConfigResponse {
@@ -17,4 +18,15 @@ message GetCaddyConfigResponse {
   string caddyfile = 1;
   // Timestamp when the config was last modified.
   google.protobuf.Timestamp modified_at = 2;
+}
+
+message FileInfo {
+  string path = 1;
+  uint32 filemode = 2;
+  google.protobuf.Timestamp modified_at = 3;
+}
+
+message SyncFileRequest {
+  FileInfo info = 1;
+  bytes contents = 2;
 }
