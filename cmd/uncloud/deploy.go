@@ -38,7 +38,7 @@ type deployOptions struct {
 func NewDeployCommand() *cobra.Command {
 	opts := deployOptions{}
 	cmd := &cobra.Command{
-		Use:   "deploy [FLAGS] [SERVICE...]",
+		Use:   "deploy [FLAGS] [URL | [SERVICE...]]",
 		Short: "Deploy services from a Compose file.",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cli.BindEnvToFlag(cmd, "yes", "UNCLOUD_AUTO_CONFIRM")
@@ -48,6 +48,11 @@ func NewDeployCommand() *cobra.Command {
 
 			return runDeploy(cmd.Context(), uncli, opts)
 		},
+		Long: `Deploy services from a Compose file.
+
+When a Git repository is set as the URL, the repository is cloned locally and then sent as the context.
+The format of URL is "url#ref:path", where "ref" is the Git reference (tag, branch, or commit) and the optional
+":path" is the path to the Compose file. This defaults to "./compose.yaml".`,
 		GroupID: "service",
 		ValidArgsFunction: func(cmd *cobra.Command, args []string, toComplete string) ([]cobra.Completion, cobra.ShellCompDirective) {
 			return completion.ComposeServices(cmd.Context(), args, toComplete, opts.files, opts.profiles)
