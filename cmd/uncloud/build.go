@@ -21,12 +21,16 @@ type buildOptions struct {
 func NewBuildCommand() *cobra.Command {
 	opts := buildOptions{}
 	cmd := &cobra.Command{
-		Use:   "build [FLAGS] [SERVICE...]",
+		Use:   "build [FLAGS] [URL | [SERVICE...]]",
 		Short: "Build services from a Compose file.",
 		Long: `Build images for services from a Compose file using local Docker.
 
 By default, built images remain on the local Docker host. Use --push to upload them
-to cluster machines or --push-registry to upload them to external registries.`,
+to cluster machines or --push-registry to upload them to external registries.
+
+When a Git repository is set as the URL, the repository is cloned locally and then sent as the context.
+The format of URL is "url#ref:path", where "ref" is the Git reference (tag, branch, or commit) and the optional
+":path" is the path to the Compose file. This defaults to "./compose.yaml".`,
 		Example: `  # Build all services that have a build section in compose.yaml.
   uc build
 
