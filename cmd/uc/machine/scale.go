@@ -49,18 +49,18 @@ func scale(ctx context.Context, clusterClient, machineClient *client.Client, unc
 			}
 			d, err := clusterClient.NewCaddyDeployment(caddyImage, "", api.Placement{})
 			if err != nil {
-				return fmt.Errorf("create caddy deployment: %w", err)
+				return fmt.Errorf("create %s deployment: %w", service.Name, err)
 			}
-			plan, err = d.Plan(ctx)
+			if plan, err = d.Plan(ctx); err != nil {
+				return fmt.Errorf("plan %s deployment: %w", service.Name, err)
+			}
 
 		default:
 			spec := service.Containers[0].Container.ServiceSpec
 			d = clusterClient.NewDeployment(spec, nil)
-			plan, err = d.Plan(ctx)
-		}
-
-		if err != nil {
-			return fmt.Errorf("plan %s deployment: %w", service.Name, err)
+			if plan, err = d.Plan(ctx); err != nil {
+				return fmt.Errorf("plan %s deployment: %w", service.Name, err)
+			}
 		}
 
 		if len(plan.Operations) == 0 {
