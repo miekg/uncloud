@@ -1,8 +1,11 @@
 package machine
 
-import "net"
+import (
+	"fmt"
+	"net"
+)
 
 // listenUnixSocket is not supported on Windows.
 func listenUnixSocket(path string) (net.Listener, error) {
-	return nil, nil
+	return nil, fmt.Errorf("not supported on Windows")
 }
