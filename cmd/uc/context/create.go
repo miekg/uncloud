@@ -1,43 +1,45 @@
-package machine
+package context
 
 import (
 	"context"
 	"fmt"
 	"os"
+	"slices"
 	"strings"
 
 	"github.com/goccy/go-yaml"
 	"github.com/psviderski/uncloud/internal/cli"
 	"github.com/psviderski/uncloud/internal/cli/config"
+	"github.com/psviderski/uncloud/internal/machine/api/pb"
 	"github.com/spf13/cobra"
 )
 
-type contextOptions struct {
+type createOptions struct {
 	context string
 	sshKey  string
 	write   bool
 }
 
-func NewContextCommand() *cobra.Command {
-	opts := contextOptions{}
+func NewCreateCommand() *cobra.Command {
+	opts := createOptions{}
 	cmd := &cobra.Command{
-		Aliases: []string{"context"},
-		Use:     "ctx [schema://]USER@HOST[:PORT]",
-		Short:   "Add the cluster context to Uncloud configuration file by connecting to the remote machine.",
-		Long: `Add the cluster context, or add new machines to an existing cluster context.
-This command adds or updates an (existing) context in your Uncloud config.
+		Use:   "create [schema://]USER@HOST[:PORT]",
+		Short: "Create the cluster context to Uncloud configuration file by connecting to the remote machine.",
+		Long: `Create the cluster context, or add new machines to an existing cluster context.
+This command adds or updates an (existing) context in your Uncloud config with machines that have a public IP address
+configured.
 
 Connection methods:
   [ssh://]user@host   - Use system 'ssh' command with full SSH config support (default, no prefix required)
   ssh+go://user@host  - Use Go's built-in SSH library`,
 		Example: `  # Get the cluster context with default settings.
-  uc machine ctx -w root@<your-server-ip>
+  uc context create -w root@<your-server-ip>
 
   # Add a new context named 'prod' in the Uncloud config (~/.config/uncloud/config.yaml).
-  uc machine ctx -w root@<your-server-ip> -c prod
+  uc context create -w root@<your-server-ip> -c prod
 
   # Add a new context with a non-root user and custom SSH port and key.
-  uc machine ctx -w ubuntu@<your-server-ip>:2222 -i ~/.ssh/mykey`,
+  uc context create -w ubuntu@<your-server-ip>:2222 -i ~/.ssh/mykey`,
 		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			uncli := cmd.Context().Value("cli").(*cli.CLI)
@@ -59,7 +61,7 @@ Connection methods:
 				conn.SSH = config.SSHDestination(destination)
 			}
 
-			return listContext(cmd.Context(), uncli, conn, opts)
+			return createContext(cmd.Context(), uncli, conn, opts)
 		},
 	}
 
@@ -80,7 +82,7 @@ Connection methods:
 	return cmd
 }
 
-func listContext(ctx context.Context, uncli *cli.CLI, conn config.MachineConnection, opts contextOptions) error {
+func createContext(ctx context.Context, uncli *cli.CLI, conn config.MachineConnection, opts createOptions) error {
 	contextName, err := uncli.NewContextName(opts.context)
 	if err != nil {
 		return err
@@ -97,9 +99,12 @@ func listContext(ctx context.Context, uncli *cli.CLI, conn config.MachineConnect
 	if err != nil {
 		return fmt.Errorf("list machines: %w", err)
 	}
+	machines = slices.DeleteFunc(machines, func(m *pb.MachineMember) bool {
+		return m.Machine.GetPublicIp() == nil
+	})
 
 	// Figure out if one of the machines is already in a context, and add the remaining there. Otherwise we
-	// create a new context with the optional name we got from the command line.
+	// create a new context with the name we got from the command line.
 	for name, context := range uncli.Config.Contexts {
 		for _, conn := range context.Connections {
 			for _, machine := range machines {

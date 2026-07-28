@@ -19,7 +19,6 @@ func NewRootCommand() *cobra.Command {
 		NewRmCommand(),
 		NewRTTCommand(),
 		NewUpdateCommand(),
-		NewContextCommand(),
 	)
 	return cmd
 }
