@@ -27,7 +27,7 @@ func NewCreateCommand() *cobra.Command {
 		Short: "Create the cluster context to Uncloud configuration file by connecting to the remote machine.",
 		Long: `Create the cluster context, or add new machines to an existing cluster context.
 This command adds or updates an (existing) context in your Uncloud config with machines that have a public IP address
-configured.
+configured. By default the context is printed to standard output, use -w to write it to the Uncloud config.
 
 Connection methods:
   [ssh://]user@host   - Use system 'ssh' command with full SSH config support (default, no prefix required)
