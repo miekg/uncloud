@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"maps"
 	"os"
 	"os/exec"
 	"strings"
@@ -105,6 +106,23 @@ func ResolveSecrets(ctx context.Context, project *types.Project) error {
 			}
 			service.Environment[k] = &value
 		}
+
+		if predeploy, ok := service.Extensions[PreDeployHookExtensionKey].(PreDeployHook); ok {
+			for k, v := range predeploy.Environment {
+				if v == nil {
+					continue
+				}
+				secretName, ok := secretRefName(*v)
+				if !ok {
+					continue
+				}
+				value, err := resolve(secretName)
+				if err != nil {
+					return err
+				}
+				predeploy.Environment[k] = &value
+			}
+		}
 	}
 
 	return nil
@@ -114,6 +132,9 @@ func ResolveSecrets(ctx context.Context, project *types.Project) error {
 // a command.
 func HasCommandSecretRefs(project *types.Project) bool {
 	for _, service := range project.Services {
+		if predeploy, ok := service.Extensions[PreDeployHookExtensionKey].(PreDeployHook); ok {
+			maps.Copy(service.Environment, predeploy.Environment)
+		}
 		for _, v := range service.Environment {
 			if v == nil {
 				continue
@@ -126,6 +147,7 @@ func HasCommandSecretRefs(project *types.Project) bool {
 				return true
 			}
 		}
+
 	}
 	return false
 }
