@@ -147,7 +147,6 @@ func HasCommandSecretRefs(project *types.Project) bool {
 				return true
 			}
 		}
-
 	}
 	return false
 }
