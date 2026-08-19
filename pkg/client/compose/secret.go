@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"maps"
 	"os"
 	"os/exec"
 	"strings"
@@ -132,9 +131,6 @@ func ResolveSecrets(ctx context.Context, project *types.Project) error {
 // a command.
 func HasCommandSecretRefs(project *types.Project) bool {
 	for _, service := range project.Services {
-		if predeploy, ok := service.Extensions[PreDeployHookExtensionKey].(PreDeployHook); ok {
-			maps.Copy(service.Environment, predeploy.Environment)
-		}
 		for _, v := range service.Environment {
 			if v == nil {
 				continue
@@ -145,6 +141,21 @@ func HasCommandSecretRefs(project *types.Project) bool {
 			}
 			if secret, ok := project.Secrets[name]; ok && secret.Driver == secretExecDriver {
 				return true
+			}
+
+			if predeploy, ok := service.Extensions[PreDeployHookExtensionKey].(PreDeployHook); ok {
+				for _, v := range predeploy.Environment {
+					if v == nil {
+						continue
+					}
+					name, ok := secretRefName(*v)
+					if !ok {
+						continue
+					}
+					if secret, ok := project.Secrets[name]; ok && secret.Driver == secretExecDriver {
+						return true
+					}
+				}
 			}
 		}
 	}
