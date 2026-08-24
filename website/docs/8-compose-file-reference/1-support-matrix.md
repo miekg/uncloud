@@ -33,6 +33,7 @@ If you rely on a specific Compose feature that is not supported by Uncloud, plea
 | `labels`                         | ❌ Not supported    |                                                                                                                                            |
 | `links`                          | ❌ Not supported    | Use service names for communication                                                                                                        |
 | `logging`                        | ✅ Supported        | Defaults to [local](https://docs.docker.com/engine/logging/drivers/local/) log driver                                                      |
+| `mac_address`                    | ✅ Supported        | 
 | `mem_limit`                      | ✅ Supported        | Memory limit                                                                                                                               |
 | `mem_reservation`                | ✅ Supported        | Memory reservation                                                                                                                         |
 | `mem_swappiness`                 | ❌ Not supported    |                                                                                                                                            |

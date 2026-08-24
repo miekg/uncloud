@@ -265,6 +265,8 @@ type ContainerSpec struct {
 	LogDriver *LogDriver
 	// PidMode sets the PID namespace mode for the container. Currently only "" or "host" is supported.
 	PidMode string
+	// MacAddress set the machine's MAC address.
+	MacAddress string
 	// Tty allocates a pseudo-TTY and connects the container's standard streams to it.
 	// Standard output and standard error share one stream.
 	Tty bool

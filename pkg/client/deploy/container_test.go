@@ -86,6 +86,25 @@ func TestEvalContainerSpecChange_ContainerTty(t *testing.T) {
 	assert.Equal(t, ContainerNeedsRecreate, EvalContainerSpecChange(newSpec, currentSpec))
 }
 
+func TestEvalContainerSpecChange_ContainerMacAddress(t *testing.T) {
+	t.Parallel()
+
+	currentSpec := api.ServiceSpec{
+		Container: api.ContainerSpec{
+			Image: "nginx:latest",
+		},
+	}
+	newSpec := api.ServiceSpec{
+		Container: api.ContainerSpec{
+			Image:      "nginx:latest",
+			MacAddress: "AA:BB:CC:DD:EE:FF",
+		},
+	}
+
+	assert.Equal(t, ContainerNeedsRecreate, EvalContainerSpecChange(currentSpec, newSpec))
+	assert.Equal(t, ContainerNeedsRecreate, EvalContainerSpecChange(newSpec, currentSpec))
+}
+
 func TestEvalContainerSpecChange_ContainerResources(t *testing.T) {
 	t.Parallel()
 

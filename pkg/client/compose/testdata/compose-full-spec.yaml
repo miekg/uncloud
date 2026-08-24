@@ -9,6 +9,7 @@ services:
     pid: host
     tty: true
     stdin_open: true
+    mac_adress: "AA:BB:CC:DD:EE:FF"
     deploy:
       update_config:
         order: stop-first
