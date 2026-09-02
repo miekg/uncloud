@@ -322,6 +322,40 @@ volumes:
 `,
 			shouldErr: true,
 		},
+		{
+			name: "external configs",
+			composeYAML: `services:
+  app:
+    image: myapp:latest
+configs:
+  http_config:
+    external: true
+`,
+			warnCount:    1,
+			warnContains: []string{"external"},
+		},
+		{
+			name: "container_name",
+			composeYAML: `services:
+  app:
+    image: myapp:latest
+    container_name: my_container
+`,
+			warnCount:    1,
+			warnContains: []string{"container_name"},
+		},
+		{
+			name: "placement",
+			composeYAML: `services:
+  app:
+    image: myapp:latest
+    deploy:
+      mode: replicated
+      replicas: 2
+`,
+			warnCount:    1,
+			warnContains: []string{"placement"},
+		},
 	}
 
 	for _, tt := range tests {
