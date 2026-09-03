@@ -345,16 +345,55 @@ configs:
 			warnContains: []string{"container_name"},
 		},
 		{
-			name: "placement",
+			name: "deploy mode",
+			composeYAML: `services:
+  app:
+    image: myapp:latest
+    deploy:
+      mode: replicated-job
+      replicas: 2
+`,
+			warnCount:    1,
+			warnContains: []string{"deploy mode must"},
+		},
+		{
+			name: "deploy mode",
 			composeYAML: `services:
   app:
     image: myapp:latest
     deploy:
       mode: replicated
+      labels:
+        - foo
       replicas: 2
 `,
 			warnCount:    1,
-			warnContains: []string{"placement"},
+			warnContains: []string{"deploy labels"},
+		},
+		{
+			name: "deploy restart_policy",
+			composeYAML: `services:
+  app:
+    image: myapp:latest
+    deploy:
+      restart_policy:
+        condition: on-failure
+`,
+			warnCount:    1,
+			warnContains: []string{"deploy restart_policy"},
+		},
+		{
+			name: "deploy placement",
+			composeYAML: `services:
+  app:
+    image: myapp:latest
+    deploy:
+      placement:
+        preferences:
+          - spread: foo
+`,
+			warnCount:    1,
+			warnContains: []string{"deploy placement"},
 		},
 	}
 
